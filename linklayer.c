@@ -49,7 +49,6 @@ int LL_connect(int portNum, int debugIn)
     /* Try to connect using port number given, bit rate as in header file,
        always uses 8 data bits, no parity, fixed time limits.  */
     debugIn = 1;
-    //New line of code here
     int status = PHY_open(portNum, BIT_RATE, 8, 0, 1000, 50, PROB_ERR);
     if (status == SUCCESS) // check if succeeded
     {
