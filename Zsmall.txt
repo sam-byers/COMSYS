@@ -1,0 +1,11 @@
+Communication Systems - EEEN20060
+Sample text file for use in lab assignments.
+!!the quick brown fox jumps over the lazy dog!!
+**THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG**
+
+This file contains some very long lines of text - entire paragraphs.
+Notepad++ should wrap these lines, so that they fit in the window and you can read them easily.
+If it does not, select the Wrap option on the View menu...
+
+In computer systems, characters are represented by numbers.  There are various different codes, or mappings from numbers to characters, in use.  Some of these are very large, and try to include all the characters needed in a wide range of languages.
+**END**

@@ -1,0 +1,20 @@
+**Communication Systems - EEEN20060**
+Sample text file for use in file handling exercise.
+!the quick brown fox jumps over the lazy dog!
+**THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG**
+
+This file contains some very long lines of text - entire paragraphs.
+Notepad++ should wrap these lines, so that they fit in the window and you can read them easily.  If it does not, select the Word Wrap option on the View menu...
+
+In computer systems, characters are represented by numbers.  There are various different codes, or mappings from numbers to characters, in use.  Some of these are very large, and try to include all the characters needed in a wide range of languages.
+
+This file uses ASCII - American Standard Code for Information Interchange.  This defines a 7-bit number to represent each letter of the English alphabet (both capital and lower case), and each digit, punctuation mark, etc. It also defines some "control characters" - not normally visible in a text editor, but used, for example, to control how the text is displayed.
+
+This file contains mostly simple "printable" characters, but there are some control characters marking the ends of lines.  All the printable characters have values (in decimal) between 32 [space] and 126 [~].  The control characters have values less than 32.
+
+In Notepad++, you can view these control characters.  On the View menu, Show Symbol, and select Show All Characters.
+
+The convention in Windows operating systems is to use two characters to mark the end of a line.  These are called CR and LF, with values 13 and 10 respectively.  CR stands for carriage return, and would move the printing position back to the left margin.  LF stands for line feed, and would move the printing position down to the next line.
+
+Unix or Linux operating systems use only LF to mark line ends.  In C strings, \n represents LF and \r represents CR.  However, in writing strings to files, \n is interpreted as a line end marker, and is translated into whatever is appropriate for the operating system being used.  Similarly, in reading strings from a file, whatever is used by the operating system to mark the end of a line is translated into \n.
+**END**
