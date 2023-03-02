@@ -738,7 +738,7 @@ int sendAck(int type, int seqNum)
         ackFrame[SEQNUMPOS + 1] = FRAMEGOOD;
         break;
     }
-    ackFrame[ACK_SIZE - 1] = makeCHKSUM(dataptr, 1, (ACK_SIZE + 5), (byte_t)seqNum);
+    ackFrame[ACK_SIZE - 1] = makeCHKSUM(dataptr, 1, (ACK_SIZE - 1), (byte_t)seqNum);
 
     // Add more bytes to the frame, and update sizeAck
 
@@ -756,6 +756,7 @@ int sendAck(int type, int seqNum)
         else if (type == NEGACK)
             naksSent++;
         if (debug)
+            // Print a message to show the frame sent
             printf("LLSA: Sent response of %d bytes, type %d, seq %d\n",
                    sizeAck, type, seqNum);
         return SUCCESS;

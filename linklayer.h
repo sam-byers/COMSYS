@@ -44,7 +44,7 @@ typedef unsigned char byte_t; // define type "byte_t" for simplicity
 // Physical Layer settings to be used
 #define PORTNUM 1       // default port number: COM1
 #define BIT_RATE 4800   // use a low speed for initial tests
-#define PROB_ERR 1E-4// probability of simulated error on receive
+#define PROB_ERR 0// probability of simulated error on receive
 
 // Logical values
 #define TRUE 1
