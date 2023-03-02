@@ -216,6 +216,7 @@ int LL_send_LLC(byte_t *dataTX, int nTXdata)
                    sizeTXframe, seqNumTX, attempts);
 
         // Now wait to receive a response (ack or nak)
+
         sizeAck = getFrame(frameAck, 2 * ACK_SIZE, 2 * TX_WAIT);
         if (sizeAck < 0)    // some problem receiving
             return FAILURE; // quit if failed
@@ -230,9 +231,10 @@ int LL_send_LLC(byte_t *dataTX, int nTXdata)
                it will re-transmit the frame and wait for a response... */
         }
         else // we have received a response frame - check it
-        {   if (debug)
+        {
+            if (debug)
                 printf("LLS: Response received, size %d\n", sizeAck);
-                // Check the frame, and extract some information
+            // Check the frame, and extract some information
             if (checkFrame(frameAck, sizeAck) == FRAMEGOOD) // good frame
             {
                 goodFrames++; // increment counter for report
@@ -243,7 +245,7 @@ int LL_send_LLC(byte_t *dataTX, int nTXdata)
 
                 /* Need to check if this is a positive ACK,
                    and if it relates to the data block just sent... */
-                if ((int) frameAck[SEQNUMPOS + 1] == 1) // need a sensible test here!!
+                if ((frameAck[SEQNUMPOS + 1] == POSACK) && (seqAck == seqNumTX)) // need a sensible test here!!
                 {
                     if (debug)
                         printf("LLS: ACK received, seq %d\n", seqAck);
@@ -254,11 +256,11 @@ int LL_send_LLC(byte_t *dataTX, int nTXdata)
                 {
                     if (debug)
                         printf("LLS: Response received, type %d, seq %d\n",
-                               (int) frameAck[SEQNUMPOS + 1], seqAck); // need sensible values here!!
-                    naksRX++;               // increment counter for report
-                                            /* What else should be done about this (if anything)?
-                                               If success remains FALSE, this loop will continue, so
-                                               it will re-transmit the frame and wait for a response... */
+                               (int)frameAck[SEQNUMPOS + 1], seqAck); // need sensible values here!!
+                    naksRX++;                                         // increment counter for report
+                                                                      /* What else should be done about this (if anything)?
+                                                                         If success remains FALSE, this loop will continue, so
+                                                                         it will re-transmit the frame and wait for a response... */
                 }
             }
             else // bad frame received - errors found
@@ -448,7 +450,7 @@ int LL_receive_LLC(byte_t *dataRX, int maxData)
                    Maybe send a response to the sender ?
                    If so, what sequence number ?
                    See the sendAck() function below.  */
-                sendAck(1, seqNumRX); // send bad ack on badframe
+                sendAck(NEGACK, seqNumRX); // send bad ack on badframe
             }
             else // we have a good frame - process it
             {
@@ -468,7 +470,7 @@ int LL_receive_LLC(byte_t *dataRX, int maxData)
                                           /* Maybe send a response to the sender ?
                                              If so, what sequence number ?
                                              See the sendAck() function below. */
-                    sendAck(0, seqNumRX); // send good ack otherwise
+                    sendAck(POSACK, seqNumRX); // send good ack otherwise
                 }
                 else if (seqNumRX == lastSeqRX) // got a duplicate data block
                 {
@@ -476,7 +478,7 @@ int LL_receive_LLC(byte_t *dataRX, int maxData)
                         printf("LLR: Duplicate rx seq. %d, expected %d\n",
                                seqNumRX, expected);
                     // What should be done about this?
-                    sendAck(1, seqNumRX); // send bad ack on badframe
+                    sendAck(NEGACK, seqNumRX); // send bad ack on badframe
                 }
                 else // some other data block??
                 {
@@ -484,7 +486,7 @@ int LL_receive_LLC(byte_t *dataRX, int maxData)
                         printf("LLR: Unexpected block rx seq. %d, expected %d\n",
                                seqNumRX, expected);
                     // What should be done about this?
-                    sendAck(1, seqNumRX); // send bad ack on badframe
+                    sendAck(NEGACK, seqNumRX); // send bad ack on badframe
 
                 } // end of sequence number checking
 
@@ -555,10 +557,6 @@ int buildDataFrame(byte_t *frameTX, byte_t *dataTX, int nDataTX, int seqNumTX)
     frameTX[HEADERSIZE + nDataTX] = makeCHKSUM(dataTX, nDataTX, framesize, (byte_t)seqNumTX);
     // create the checksum using the makeCHKSUM function, it takes arguments for the framesize, data bytes and sequence number value
 
-    /* Add the trailer to the frame
-       Need to include some error detection system - one or more check
-       bytes in the trailer, either before or after the end marker. */
-
     // Return the size of the frame
     return HEADERSIZE + nDataTX + TRAILERSIZE;
 } // end of buildDataFrame
@@ -605,12 +603,12 @@ int getFrame(byte_t *frameRX, int maxSize, float timeLimit)
     bytesGot = PHY_get((frameRX + bytesRX), 1);
 
     if (bytesGot < 0)
-        return bytesGot;
+        return bytesGot; // check for problem and give up
     else
-        bytesRX += bytesGot;
+        bytesRX += bytesGot; // otherwise update the bytes received count
 
-    framesize = frameRX[FRAMENUMBERPOS];
-    printf("\n FRAMESIZE :%d", framesize);
+    framesize = frameRX[FRAMENUMBERPOS]; // get the framesize byte
+    printf("\n FRAMESIZE :%d", framesize); // print the framesize byte
     bytesGot = PHY_get((frameRX + bytesRX), framesize); // get framesize bytes at a time
     if (bytesGot < 0)
         return bytesGot; // check for problem and give up
@@ -620,20 +618,6 @@ int getFrame(byte_t *frameRX, int maxSize, float timeLimit)
     /* Now collect more bytes, until we find the end marker.
        If we had the frame size, we could do this more efficiently, by
        asking PHY_get() to collect all the remaining bytes in one call. */
-
-    /*do
-    {
-        bytesGot = PHY_get((frameRX + bytesRX), 1); // get one byte at a time
-        if (bytesGot < 0)
-            return bytesGot; // check for problem and give up
-        else
-            bytesRX += bytesGot; // otherwise update the bytes received count
-    } while ((frameRX[bytesRX - 1] != ENDBYTE) && !timeUp(timerRX) && bytesRX < maxSize);
-    // until we get the end of frame marker or reach time limit or size limit
-    */
-
-    // If we reached the time limit, without finding the end marker,
-    // this will be a bad frame, so report the facts but return 0
 
     // If we filled the frame array, without finding the end marker,
     // this will be a bad frame, so so report the facts but return 0
@@ -721,25 +705,27 @@ int processFrame(byte_t *frameRX, int sizeFrame,
 int sendAck(int type, int seqNum)
 {
     byte_t ackFrame[ACK_SIZE + 2]; // allow extra bytes for byte stuff
-    int sizeAck = ACK_SIZE;    // number of bytes in the ack frame so far
-    int retVal;                // return value from functions
+    int sizeAck = ACK_SIZE;        // number of bytes in the ack frame so far
+    int retVal;                    // return value from functions
 
     // First build the frame
-    ackFrame[0] = STARTBYTE;
+    ackFrame[0] = STARTBYTE; 
     ackFrame[FRAMENUMBERPOS] = (ACK_SIZE - 1);
     ackFrame[SEQNUMPOS] = seqNum;
     switch (type)
     {
-    case 1:
-        ackFrame[SEQNUMPOS + 1] = FRAMEBAD;
+    case POSACK:
+        ackFrame[SEQNUMPOS + 1] = FRAMEGOOD;
         break;
 
     default:
-        ackFrame[SEQNUMPOS + 1] = FRAMEGOOD;
+        ackFrame[SEQNUMPOS + 1] = FRAMEBAD;
         break;
     }
     byte_t *dataptr = &ackFrame[SEQNUMPOS + 1];
-    ackFrame[ACK_SIZE - 1] = makeCHKSUM(dataptr , 1, (byte_t)(ACK_SIZE - 1), (byte_t) seqNum);
+    ackFrame[ACK_SIZE - 1] = makeCHKSUM(dataptr, 1, (byte_t)(ACK_SIZE - 1), (byte_t)seqNum);
+    if(debug)
+        printf("ACKFRAME : %s, SIZEACK : %d", ackFrame, sizeAck);
 
     // Add more bytes to the frame, and update sizeAck
 

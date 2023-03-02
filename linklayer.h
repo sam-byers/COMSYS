@@ -11,8 +11,8 @@ typedef unsigned char byte_t; // define type "byte_t" for simplicity
 #define LINKLAYER_H_INCLUDED
 
 // Link Layer Protocol definitions - adjust all these to match your design
-#define MAX_BLK 200   // largest number of data bytes allowed in one frame
-#define OPT_BLK 70    // optimum number of data bytes in a frame
+#define MAX_BLK 424   // largest number of data bytes allowed in one frame
+#define OPT_BLK 212    // optimum number of data bytes in a frame
 #define MOD_SEQNUM 16 // modulo for sequence numbers
 
 // Frame marker byte values
@@ -44,7 +44,7 @@ typedef unsigned char byte_t; // define type "byte_t" for simplicity
 // Physical Layer settings to be used
 #define PORTNUM 1       // default port number: COM1
 #define BIT_RATE 4800   // use a low speed for initial tests
-#define PROB_ERR 0// probability of simulated error on receive
+#define PROB_ERR 8E-5   //probability of simulated error on receive
 
 // Logical values
 #define TRUE 1
